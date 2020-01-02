@@ -58,33 +58,36 @@ export class ApolloClientVisitor extends ClientSideBaseVisitor<
   }
 
   public getSdkContent(): string {
-    const actions = this._operationsToInclude.map((operation: OperationToInclude) => {
+    const actions = this._operationsToInclude.map(({
+      node,
+      documentVariableName,
+      operationType,
+      operationResultType,
+      operationVariablesTypes,
+    }: OperationToInclude) => {
       const optionalVariables =
-        !operation.node.variableDefinitions ||
-        operation.node.variableDefinitions.length === 0 ||
-        operation.node.variableDefinitions.every(
+        !node.variableDefinitions ||
+        node.variableDefinitions.length === 0 ||
+        node.variableDefinitions.every(
           v => v.type.kind !== Kind.NON_NULL_TYPE || v.defaultValue
         );
 
-      const doc = operation.documentVariableName;
-
-      const functionName = operation.node.name.value;
+      const functionName = node.name.value;
 
       const variables = `variables${
         optionalVariables ? '?' : ''
-      }: ${operation.operationVariablesTypes}`
-
-      const resultType = operation.operationResultType;
+      }: ${operationVariablesTypes}`
 
       let body: string;
 
-      if (operation.node.operation === 'mutation') {
-        const mutationOptions = `{ mutation: ${doc}, variables }`;
-
-        body = `return client.mutate<${resultType}, ${operation.operationVariablesTypes}>(${mutationOptions})`
+      if (operationType === 'Mutation') {
+        const mutationOptions = `{ mutation: ${documentVariableName}, variables }`;
+        body = `return client.mutate<${operationResultType}, ${operationVariablesTypes}>(${mutationOptions})`
+      } else if (operationType === 'Query') {
+        const queryOptions= `{ query: ${documentVariableName}, variables }`;
+        body = `return client.query<${operationResultType}, ${operationVariablesTypes}>(${queryOptions})`
       } else {
-        const queryOptions= `{ query: ${doc}, variables }`;
-        body = `return client.query<${resultType}, ${operation.operationVariablesTypes}>(${queryOptions})`
+        throw new Error(`"${operationType}" operations are not supported.`)
       }
 
       return indentMultiline(

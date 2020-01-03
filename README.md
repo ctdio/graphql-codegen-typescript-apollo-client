@@ -1,3 +1,4 @@
 # graphql-codegen-typescript-apollo-client
 
-NOTE: don't use, this is very experimental at the moment. Needs tests.
+A small plugin for generating typed functions for executing queries
+and mutations with `apollo-client`.

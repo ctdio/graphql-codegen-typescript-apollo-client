@@ -23,7 +23,11 @@ export const plugin: PluginFunction<RawClientSideBasePluginConfig> = (
 ) => {
   const allAst = concatAST(
     documents.reduce((prev, v) => {
-      return [...prev, v.content];
+      if (v.document) {
+        return [...prev, v.document];
+      } else {
+        return prev;
+      }
     }, [])
   );
 
